@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + React</title>
+    <style>
+      @media print {
+        @page {
+          margin: 0;
+          size: auto;
+        }
+        
+        body * {
+          visibility: hidden;
+        }
+        
+        #full-preview, #full-preview * {
+          visibility: visible;
+        }
+        
+        #full-preview {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          padding: 20px;
+        }
+
+        /* Ocultar la URL y otros elementos del navegador */
+        html {
+          background-color: #FFFFFF;
+        }
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji',
+          'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+        color: #e4e4e4;
+        background-color: #1d2025;
+      }
+
+      /* variables de color */
+
+      :root {
+        --color-primary: #44474c;
+        --primary-hover: #7c7c7c;
+        --complementary: #2d2f33;
+        --danger: #ff4d4f;
+        --text-color: #e4e4e4;
+        --background-color: #1d2025;
+        --background-secondary: #2c2e33;
+        --background-tertiary: #414449;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" style="position: absolute; width: 100%; height: 100vh;"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
