@@ -7,7 +7,7 @@ import { FileText, Edit3, Printer, Menu, X } from 'lucide-react';
 import MarkdownPreview from '@uiw/react-markdown-preview';
 
 export default function App() {
-  const [view, setView] = useState('Chat');
+  const [view, setView] = useState('Plantilla');
   const [isEditorMode, setIsEditorMode] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [markdown, setMarkdown] = useState('<div style="display:flex; justify-content:center; align-items: center; height: 50vh"><h2>Acá se renderizará tu informe</h2></div>');
@@ -41,17 +41,18 @@ export default function App() {
             </div>
           </label>
           <button 
-            onClick={() => setView('Chat')} 
-            className={view === 'Chat' ? 'selected' : ''}
-          >
-            Chat
-          </button>
-          <button 
             onClick={() => setView('Plantilla')} 
             className={view === 'Plantilla' ? 'selected' : ''}
           >
             Plantilla
           </button>
+          <button 
+            onClick={() => setView('Chat')} 
+            className={view === 'Chat' ? 'selected' : ''}
+          >
+            Chat
+          </button>
+          
           
           
 
