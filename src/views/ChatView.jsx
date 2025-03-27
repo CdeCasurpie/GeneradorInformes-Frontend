@@ -19,6 +19,30 @@ function ChatView({ structure, setStructure, paths, setMarkdown }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Función para renderizar la estructura completa
+  const renderStructure = (obj, parentPath = '') => {
+    return Object.entries(obj).map(([key, value]) => {
+      const currentPath = parentPath ? `${parentPath}.${key}` : key;
+
+      if (Array.isArray(value)) {
+        return renderArrayField(currentPath, value, key);
+      } else if (typeof value === 'object' && value !== null) {
+        return (
+          <div key={key} className="section-container">
+            <h3 className="section-title">
+              {key.charAt(0).toUpperCase() + key.slice(1).toLowerCase().replace(/_/g, ' ')}
+            </h3>
+            <div className="section-content">
+              {renderStructure(value, currentPath)}
+            </div>
+          </div>
+        );
+      } else {
+        return renderField(key, value, parentPath);
+      }
+    });
+  };
+
   const getFlatStructure = (obj, parentKey = '', depth = 0) => {
     let fields = [];
     
@@ -365,14 +389,6 @@ function ChatView({ structure, setStructure, paths, setMarkdown }) {
           ))}
           
           <div className="array-controls">
-            <button
-              type="button"
-              onClick={handlePrev}
-              className="nav-button prev"
-            >
-              <ArrowLeft size={16} />
-              Anterior
-            </button>
             <div className="array-actions">
               <button
                 type="button"
@@ -381,14 +397,6 @@ function ChatView({ structure, setStructure, paths, setMarkdown }) {
               >
                 <Plus size={16} />
                 Añadir otro
-              </button>
-              <button
-                type="button"
-                onClick={handleNext}
-                className="nav-button next"
-              >
-                Siguiente
-                <ArrowRight size={16} />
               </button>
             </div>
           </div>
@@ -424,8 +432,9 @@ function ChatView({ structure, setStructure, paths, setMarkdown }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
-        body: JSON.stringify({form_data: structure, ...paths})
+        body: JSON.stringify({form_data: structure, ...paths}),
       });
   
       if (!response.ok) {
@@ -446,10 +455,6 @@ function ChatView({ structure, setStructure, paths, setMarkdown }) {
         // Actualizar el markdown en el estado
         setMarkdown(markdownContent);
         
-        // También actualizamos la estructura con los datos procesados si están disponibles
-        if (data.processed_data) {
-          setStructure(data.processed_data);
-        }
       } else {
         throw new Error('Error al generar el documento');
       }
@@ -463,66 +468,33 @@ function ChatView({ structure, setStructure, paths, setMarkdown }) {
   return (
     <div className="form-container">
       <div className="form-header">
-        <h2 className="form-title">
-          {currentField?.label.charAt(0).toUpperCase() + currentField?.label.slice(1).toLowerCase() || 'Formulario'}
-        </h2>
-        <div className="progress-bar">
-          <div
-            className="progress-fill"
-            style={{ width: `${((currentStep + 1) / fields.length) * 100}%` }}
-          />
-        </div>
+        <h2 className="form-title">Formulario de Generación</h2>
       </div>
       <div className="form-content">
         {Object.keys(structure || {}).length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-96 gap-4">
-            <Alert className="bg-yellow-500/10 border border-yellow-500/20">
+          <div className="empty-state">
+            <Alert>
               <AlertDescription>
                 Sube un PDF primero para que se genere la plantilla
               </AlertDescription>
             </Alert>
           </div>
         ) : (
-          <>
-            {renderCurrentStep()}
-            
-            {currentField?.type !== 'array' && (
-              <div className="form-controls">
-                <button
-                  type="button"
-                  onClick={handlePrev}
-                  disabled={currentStep === 0}
-                  className="nav-button prev"
-                >
-                  <ArrowLeft size={16} />
-                  <span>Anterior</span>
-                </button>
-
-                {currentStep === fields.length - 1 ? (
-                  <button
-                    onClick={handleGeneratePDF}
-                    disabled={isLoading}
-                    className="nav-button generate"
-                  >
-                    <span>{isLoading ? 'Generando...' : 'Generar PDF'}</span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleNext}
-                    className="nav-button next"
-                  >
-                    <span>Siguiente</span>
-                    <ArrowRight size={16} />
-                  </button>
-                )}
-              </div>
-            )}
-          </>
+          <div className="full-form">
+            {renderStructure(structure)}
+            <div className="form-actions">
+              <button
+                onClick={handleGeneratePDF}
+                disabled={isLoading}
+                className="generate-button"
+              >
+                <span>{isLoading ? 'Generando...' : 'Generar PDF'}</span>
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </div>
   );
 }
-
 export default ChatView;

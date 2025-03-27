@@ -1,10 +1,26 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import './App.css';
 import './Slider.css';
 import ChatView from './views/ChatView';
 import PlantillaView from './views/PlantillaView';
-import { FileText, Edit3, Printer, Menu, X } from 'lucide-react';
+import { FileText, Edit3, Printer, Menu, X, LogOut } from 'lucide-react';
 import MarkdownPreview from '@uiw/react-markdown-preview';
+import MarkdownEditor from './MarkdownEditor';
+
+export const handleLogout = () => {
+  // Clear localStorage
+  localStorage.clear();
+  
+  // Clear cookies by setting their expiration to the past
+  document.cookie.split(";").forEach((cookie) => {
+    document.cookie = cookie
+      .replace(/^ +/, "")
+      .replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`);
+  });
+  
+  // Redirect to login page or reload
+  window.location.href = '/';
+};
 
 export default function App() {
   const [view, setView] = useState('Plantilla');
@@ -14,6 +30,13 @@ export default function App() {
   const [structure, setStructure] = useState({});
   const [paths, setPaths] = useState({});
 
+  useEffect(() => {
+    // Check if user is logged in
+    if (!localStorage.getItem('token')) {
+      window.location.href = '/login';
+    }
+  }, []);
+
   const handlePrint = useCallback(() => {
     window.print();
   }, []);
@@ -22,11 +45,11 @@ export default function App() {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
+
   return (
     <div className="main-container">
       <header>
-        <h1
-        >GPT - Document generator</h1>
+        <h1>GPT - Document generator</h1>
         <nav>
           {/* Switch para el modo editor */}
           <label className="switch-container">
@@ -53,12 +76,17 @@ export default function App() {
             Chat
           </button>
           
-          
-          
+          <button 
+            onClick={handleLogout}
+            className="logout-button"
+          >
+            <LogOut size={16} />
+            <span>Cerrar sesión</span>
+          </button>
 
           <button 
             onClick={toggleSidebar}
-            className="menu-button md:hidden"
+            className="menu-button"
           >
             {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -83,17 +111,14 @@ export default function App() {
                   setMarkdown={setMarkdown} 
                   setStructure={setStructure} 
                   setPaths={setPaths}
+                  paths={paths}
                 />
               )
             ) : (
-              <div className="editor-container">
-                <textarea
+                <MarkdownEditor
                   value={markdown}
-                  onChange={(e) => setMarkdown(e.target.value)}
-                  placeholder="Escribe tu Markdown aquí..."
-                  className="editor-textarea"
+                  onChange={(value) => setMarkdown(value)}
                 />
-              </div>
             )}
           </div>
         </div>
@@ -103,7 +128,7 @@ export default function App() {
           className={`preview-panel ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}
         >
           {/* Encabezado del panel derecho para móvil */}
-          <div className="preview-header md:hidden">
+          <div className="preview-header">
             <button 
               onClick={toggleSidebar}
               className="close-preview-button"

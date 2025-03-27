@@ -1,9 +1,10 @@
 import { useState, useRef } from "react";
 import "./PlantillaView.css";
 import { Upload, FileText, Book, AlertCircle } from "lucide-react";
+import { useEffect } from "react";
 import { config } from "../../config";
 
-function PlantillaView({ setMarkdown, setStructure, setPaths }) {
+function PlantillaView({ setMarkdown, setStructure, setPaths, paths }) {
     const [templateFile, setTemplateFile] = useState(null);
     const [knowledgeFile, setKnowledgeFile] = useState(null);
     const [templateDragActive, setTemplateDragActive] = useState(false);
@@ -12,6 +13,11 @@ function PlantillaView({ setMarkdown, setStructure, setPaths }) {
     const templateInputRef = useRef(null);
     const knowledgeInputRef = useRef(null);
 
+    const [savedTemplates, setSavedTemplates] = useState([]);
+    const [savedKnowledge, setSavedKnowledge] = useState([]);
+    const [selectedTemplate, setSelectedTemplate] = useState(localStorage.getItem('selectedTemplate') || '');
+    const [selectedKnowledge, setSelectedKnowledge] = useState(localStorage.getItem('selectedKnowledge') || '');
+    
     const handleDrag = (e, setDragActive) => {
         e.preventDefault();
         e.stopPropagation();
@@ -21,6 +27,69 @@ function PlantillaView({ setMarkdown, setStructure, setPaths }) {
             setDragActive(false);
         }
     };
+    
+
+    useEffect(() => {
+        // Fetch saved templates and knowledge files when component mounts
+        fetchSavedFiles();
+    }, []);
+
+    useEffect(() => {
+        //fetch selected template
+        if (selectedTemplate) {
+            fetch(`${config.BACKEND_URL}static/templates/${localStorage.getItem('token')}/${selectedTemplate}`)
+            .then(response => response.text())
+            .then(data => {
+                setMarkdown(data);
+            })
+
+            //quitarle a selectedTemplate el .md
+            let templateName = selectedTemplate.split(".")[0];
+
+            fetch(`${config.BACKEND_URL}static/templates/${localStorage.getItem('token')}/${templateName}_structure.json`)
+            .then(response => response.text())
+            .then(data => {
+                setStructure(JSON.parse(data));
+            })
+
+            setPaths({
+                ...paths,
+                template_path: `static/templates/${localStorage.getItem('token')}/${selectedTemplate}`,
+                structure_path: `static/templates/${localStorage.getItem('token')}/${templateName}_structure.json`,
+                knowledge_path: `static/knowledge/${localStorage.getItem('token')}/${selectedKnowledge}`,
+            })
+        }
+
+    }, [selectedTemplate, selectedKnowledge]);
+
+    const fetchSavedFiles = async () => {
+        try {
+            // Fetch templates
+            const templatesResponse = await fetch(`${config.BACKEND_URL}api/v1/template`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                }
+            });
+            const templatesData = await templatesResponse.json();
+            if (templatesData.success) {
+                setSavedTemplates(templatesData.template_files);
+            }
+
+            // Fetch knowledge files
+            const knowledgeResponse = await fetch(`${config.BACKEND_URL}api/v1/knowledge`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                }
+            });
+            const knowledgeData = await knowledgeResponse.json();
+            if (knowledgeData.success) {
+                setSavedKnowledge(knowledgeData.knowledge_files);
+            }
+        } catch (error) {
+            console.error('Error fetching saved files:', error);
+        }
+    };
+
 
     const handleDrop = (e, setFile, setDragActive) => {
         e.preventDefault();
@@ -44,15 +113,20 @@ function PlantillaView({ setMarkdown, setStructure, setPaths }) {
         setIsLoading(true);
         try {
             const formData = new FormData();
+
             formData.append('template_file', templateFile);
             formData.append('knowledge_file', knowledgeFile);
+            
 
             // Primera llamada: analizar documentos
             const analyzeResponse = await fetch(
                 `${config.BACKEND_URL}api/v1/document/analyze`,
                 {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    },
                 }
             );
 
@@ -89,6 +163,16 @@ function PlantillaView({ setMarkdown, setStructure, setPaths }) {
         }
     };
 
+    const handleTemplateSelect = (template) => {
+        setSelectedTemplate(template);
+        localStorage.setItem('selectedTemplate', template);
+    };
+
+    const handleKnowledgeSelect = (knowledge) => {
+        setSelectedKnowledge(knowledge);
+        localStorage.setItem('selectedKnowledge', knowledge);
+    };
+
     const FileUploadBox = ({ 
         file, 
         setFile, 
@@ -109,7 +193,6 @@ function PlantillaView({ setMarkdown, setStructure, setPaths }) {
         >
             {file === null ? (
                 <>
-                    <Icon style={{ width: "50px", height: "50px" }} />
                     <h4>Arrastra tu {title} aquí</h4>
                     <p>o haz click para seleccionar un archivo</p>
                     <input 
@@ -147,14 +230,26 @@ function PlantillaView({ setMarkdown, setStructure, setPaths }) {
 
     return (
         <div className="template-container" style={{position: "relative", width: "100%"}}>
-            <p className="info-text">
-                <AlertCircle size={20} />
-                Por defecto los valores usados son los últimos cargados.
-            </p>
-            
             <div className="upload-section">
                 <div className="upload-box">
                     <h3>Plantilla Base</h3>
+                    {savedTemplates.length > 0 && (
+                        <div className="saved-files-section">
+                            <select 
+                                value={selectedTemplate}
+                                onChange={(e) => handleTemplateSelect(e.target.value)}
+                                className="file-select"
+                            >
+                                <option value="">Seleccionar plantilla...</option>
+                                {savedTemplates.map((template) => (
+                                    <option key={template} value={template}>
+                                        {template}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+                    <p className="separator">- o -</p>
                     <FileUploadBox 
                         file={templateFile}
                         setFile={setTemplateFile}
@@ -167,13 +262,25 @@ function PlantillaView({ setMarkdown, setStructure, setPaths }) {
                     />
                 </div>
 
-                <br />
-
                 <div className="upload-box">
                     <h3>Base de Conocimiento</h3>
-                    <p className="knowledge-description">
-                        Sube un archivo PDF con las normas y requisitos para la generación del reporte
-                    </p>
+                    {savedKnowledge.length > 0 && (
+                        <div className="saved-files-section">
+                            <select 
+                                value={selectedKnowledge}
+                                onChange={(e) => handleKnowledgeSelect(e.target.value)}
+                                className="file-select"
+                            >
+                                <option value="">Seleccionar archivo...</option>
+                                {savedKnowledge.map((knowledge) => (
+                                    <option key={knowledge} value={knowledge}>
+                                        {knowledge}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+                    <p className="separator">- o -</p>
                     <FileUploadBox 
                         file={knowledgeFile}
                         setFile={setKnowledgeFile}
@@ -190,7 +297,9 @@ function PlantillaView({ setMarkdown, setStructure, setPaths }) {
             <button 
                 className={`generate-pdf-button ${isLoading ? 'loading' : ''}`}
                 onClick={generateTemplate}
-                disabled={!templateFile || !knowledgeFile || isLoading}
+                disabled={(!templateFile) || 
+                         (!knowledgeFile) || 
+                         isLoading}
             >
                 <FileText size={20} />
                 {isLoading ? 'Generando...' : 'Generar Template'}

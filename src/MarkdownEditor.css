@@ -1,0 +1,84 @@
+.simple-editor-container {
+    position: relative;
+    height: 100%;
+    background-color: var(--background-secondary);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .simple-editor-textarea,
+  .editor-highlight {
+    margin: 0;
+    border: 0;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 1rem;
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    box-sizing: border-box;
+  }
+  
+  .simple-editor-textarea {
+    color: transparent;
+    background: transparent;
+    caret-color: white;
+    resize: none;
+    z-index: 2;
+  }
+  
+  .editor-highlight {
+    z-index: 1;
+    pointer-events: none;
+    background-color: transparent;
+    color: #fff;
+    overflow-y: auto;
+  }
+  
+  /* Estilos de resaltado */
+  .editor-highlight .heading-1 { color: #60a5fa; }
+  .editor-highlight .heading-2 { color: #60a5fa; }
+  .editor-highlight .heading-3 { color: #60a5fa; }
+  .editor-highlight .separator { color: #ef4444; margin-bottom: 0; display: block; text-align: left; }
+  .editor-highlight .bold { color: #fbbf24; }
+  .editor-highlight .list-item { color: #ef4444; }
+  .editor-highlight .quote { color: #a78bfa; }
+  .editor-highlight .link { color: #818cf8; }
+  
+  /* Contenedor con borde */
+  .simple-editor-container {
+    border: 1px solid var(--border-color);
+  }
+  
+  /* Estilo para el scrollbar */
+  .simple-editor-textarea::-webkit-scrollbar,
+  .editor-highlight::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .simple-editor-textarea::-webkit-scrollbar-track,
+  .editor-highlight::-webkit-scrollbar-track {
+    background: var(--background-secondary);
+  }
+  
+  .simple-editor-textarea::-webkit-scrollbar-thumb,
+  .editor-highlight::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+  }
+  
+  .simple-editor-textarea::-webkit-scrollbar-thumb:hover,
+  .editor-highlight::-webkit-scrollbar-thumb:hover {
+    background: #666;
+  }
+  
+  /* Estilo para el focus */
+  .simple-editor-container:focus-within {
+    border-color: var(--accent-color);
+  }
